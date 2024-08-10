@@ -1,5 +1,28 @@
 import React, { useState } from 'react';
-import './App.css';
+import {
+  Container,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  CircularProgress,
+  Card,
+  CardMedia,
+  CardContent,
+} from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import MovieIcon from '@mui/icons-material/Movie';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+});
 
 const API_URL = 'https://open.bigmodel.cn/api/paas/v4';
 
@@ -11,8 +34,6 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const getApiKey = async () => {
-    // 在实际应用中，你应该使用更安全的方式来获取 API 密钥
-    // 比如从服务器端获取，或使用环境变量
     return process.env.REACT_APP_API_KEY;
   };
 
@@ -99,25 +120,56 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <input
-        type="text"
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder="输入提示词"
-      />
-      <button onClick={handleGenerateClick} disabled={isGenerating}>
-        {isGenerating ? '生成中...' : '生成视频'}
-      </button>
-      <div>{status}</div>
-      {coverImageUrl && <img src={coverImageUrl} alt="Video cover" />}
-      {videoUrl && (
-        <video controls>
-          <source src={videoUrl} type="video/mp4" />
-          您的浏览器不支持 HTML5 视频。
-        </video>
-      )}
-    </div>
+    <ThemeProvider theme={theme}>
+      <Container maxWidth="md">
+        <Box sx={{ my: 4, textAlign: 'center' }}>
+          <Typography variant="h3" component="h1" gutterBottom>
+            文生视频
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="输入提示词"
+              sx={{ mr: 2, maxWidth: '500px' }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleGenerateClick}
+              disabled={isGenerating}
+              startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <MovieIcon />}
+            >
+              {isGenerating ? '生成中...' : '生成视频'}
+            </Button>
+          </Box>
+          <Typography variant="body1" color="text.secondary" gutterBottom>
+            {status}
+          </Typography>
+          {(coverImageUrl || videoUrl) && (
+            <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
+              {coverImageUrl && (
+                <CardMedia
+                  component="img"
+                  image={coverImageUrl}
+                  alt="Video cover"
+                  sx={{ height: 300, objectFit: 'cover' }}
+                />
+              )}
+              <CardContent>
+                {videoUrl && (
+                  <video controls width="100%">
+                    <source src={videoUrl} type="video/mp4" />
+                    您的浏览器不支持 HTML5 视频。
+                  </video>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </Box>
+      </Container>
+    </ThemeProvider>
   );
 }
 

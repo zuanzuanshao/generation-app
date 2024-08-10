@@ -9,6 +9,8 @@ import {
   Card,
   CardMedia,
   CardContent,
+  Paper,
+  Divider,
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import MovieIcon from '@mui/icons-material/Movie';
@@ -16,10 +18,19 @@ import MovieIcon from '@mui/icons-material/Movie';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#3f51b5',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#f50057',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+  typography: {
+    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+    h3: {
+      fontWeight: 700,
     },
   },
 });
@@ -121,54 +132,73 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Container maxWidth="md">
-        <Box sx={{ my: 4, textAlign: 'center' }}>
-          <Typography variant="h3" component="h1" gutterBottom>
-            文生视频
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="输入提示词"
-              sx={{ mr: 2, maxWidth: '500px' }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleGenerateClick}
-              disabled={isGenerating}
-              startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <MovieIcon />}
-            >
-              {isGenerating ? '生成中...' : '生成视频'}
-            </Button>
-          </Box>
-          <Typography variant="body1" color="text.secondary" gutterBottom>
-            {status}
-          </Typography>
-          {(coverImageUrl || videoUrl) && (
-            <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
-              {coverImageUrl && (
-                <CardMedia
-                  component="img"
-                  image={coverImageUrl}
-                  alt="Video cover"
-                  sx={{ height: 300, objectFit: 'cover' }}
-                />
-              )}
-              <CardContent>
-                {videoUrl && (
-                  <video controls width="100%">
-                    <source src={videoUrl} type="video/mp4" />
-                    您的浏览器不支持 HTML5 视频。
-                  </video>
+      <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
+        <Container maxWidth="md">
+          <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+            <Typography variant="h3" component="h1" gutterBottom align="center" color="primary">
+              文生视频
+            </Typography>
+            <Divider sx={{ my: 3 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="输入创意视频提示词"
+                sx={{ mb: 2 }}
+              />
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleGenerateClick}
+                disabled={isGenerating}
+                startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <MovieIcon />}
+                sx={{ minWidth: 200 }}
+              >
+                {isGenerating ? '生成中...' : '生成视频'}
+              </Button>
+            </Box>
+            {status && (
+              <Typography variant="body1" color="text.secondary" align="center" gutterBottom>
+                {status}
+              </Typography>
+            )}
+            {(coverImageUrl || videoUrl) && (
+              <Card sx={{ mt: 4, borderRadius: 2, overflow: 'hidden' }}>
+                {coverImageUrl && (
+                  <CardMedia
+                    component="img"
+                    image={coverImageUrl}
+                    alt="Video cover"
+                    sx={{ height: 300, objectFit: 'cover' }}
+                  />
                 )}
-              </CardContent>
-            </Card>
-          )}
-        </Box>
-      </Container>
+                <CardContent sx={{ p: 3 }}>
+                  {videoUrl && (
+                    <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
+                      <video
+                        controls
+                        width="100%"
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                        }}
+                      >
+                        <source src={videoUrl} type="video/mp4" />
+                        您的浏览器不支持 HTML5 视频。
+                      </video>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </Paper>
+        </Container>
+      </Box>
     </ThemeProvider>
   );
 }

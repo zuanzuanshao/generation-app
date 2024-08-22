@@ -248,6 +248,7 @@ function App() {
                     {videoUrl && (
                       <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
                         <video
+                          key={videoUrl}
                           controls
                           width="100%"
                           style={{

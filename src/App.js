@@ -80,7 +80,7 @@ const theme = createTheme({
   },
 });
 
-const API_URL = 'https://empty-bush-798a.realzuanzuan.workers.dev/';
+const API_URL = 'https://empty-bush-798a.realzuanzuan.workers.dev';
 
 // const API_URL = 'https://open.bigmodel.cn/api/paas/v4';
 

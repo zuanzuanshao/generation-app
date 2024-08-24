@@ -83,7 +83,8 @@ const theme = createTheme({
   },
 });
 
-const API_URL = 'https://empty-bush-798a.realzuanzuan.workers.dev';
+// const API_URL = 'https://empty-bush-798a.realzuanzuan.workers.dev';
+const API_URL = 'https://zhipuai.rsuxwvilc.top';
 
 function App() {
   const [prompt, setPrompt] = useState('');

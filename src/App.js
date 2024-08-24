@@ -12,9 +12,12 @@ import {
   Paper,
   Divider,
   LinearProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import MovieIcon from '@mui/icons-material/Movie';
+import ImageIcon from '@mui/icons-material/Image';
 import { keyframes } from '@emotion/react';
 
 const pulseKeyframe = keyframes`
@@ -88,9 +91,11 @@ function App() {
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
 
   const getApiKey = async () => {
     return process.env.REACT_APP_API_KEY;
@@ -119,6 +124,33 @@ function App() {
     }
   };
 
+  const generateImage = async (prompt) => {
+    try {
+      const response = await fetch(`${API_URL}/images/generations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + await getApiKey()
+        },
+        body: JSON.stringify({ prompt: prompt, model: "cogview-3" })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.data && data.data.length > 0 && data.data[0].url) {
+        return data.data[0].url;
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('生成图片时出错:', error);
+      return null;
+    }
+  };
+
   const checkVideoStatus = async (id) => {
     try {
       const response = await fetch(`${API_URL}/async-result/${id}`, {
@@ -140,44 +172,62 @@ function App() {
     }
   };
 
-  const handleGenerateClick = async () => {
+  const handleGenerate = async () => {
     if (!prompt.trim()) {
       alert('请输入提示词');
       return;
     }
 
     setIsGenerating(true);
-    setStatus('正在生成视频...');
+    setStatus('正在生成...');
     setProgress(0);
 
+    if (activeTab === 0) {
+      // 生成视频
+    const videoId = await generateVideo(prompt);
     const videoId = await generateVideo(prompt);
 
-    if (videoId) {
-      let videoReady = false;
-      while (!videoReady) {
-        setStatus('正在检查视频状态...');
-        const statusResult = await checkVideoStatus(videoId);
+      const videoId = await generateVideo(prompt);
 
-        if (statusResult && statusResult.task_status === 'SUCCESS') {
-          videoReady = true;
-          const videoResult = statusResult.video_result[0];
-          setVideoUrl(videoResult.url);
-          setCoverImageUrl(videoResult.cover_image_url);
-          setStatus('视频已就绪!');
-          setProgress(100);
-        } else if (statusResult && statusResult.task_status === 'PROCESSING') {
-          setStatus('视频正在处理中,请稍候...');
-          setProgress((prev) => Math.min(prev + 10, 90));
-          await new Promise(resolve => setTimeout(resolve, 5000));
-        } else {
-          videoReady = true;
-          setStatus('生成视频失败,请重试。');
-          setProgress(0);
+      if (videoId) {
+        let videoReady = false;
+        while (!videoReady) {
+          setStatus('正在检查视频状态...');
+          const statusResult = await checkVideoStatus(videoId);
+
+          if (statusResult && statusResult.task_status === 'SUCCESS') {
+            videoReady = true;
+            const videoResult = statusResult.video_result[0];
+            setVideoUrl(videoResult.url);
+            setCoverImageUrl(videoResult.cover_image_url);
+            setStatus('视频已就绪!');
+            setProgress(100);
+          } else if (statusResult && statusResult.task_status === 'PROCESSING') {
+            setStatus('视频正在处理中,请稍候...');
+            setProgress((prev) => Math.min(prev + 10, 90));
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          } else {
+            videoReady = true;
+            setStatus('生成视频失败,请重试。');
+            setProgress(0);
+          }
         }
+      } else {
+        setStatus('无法生成视频,请重试。');
+        setProgress(0);
       }
     } else {
-      setStatus('无法生成视频,请重试。');
-      setProgress(0);
+      // 生成图片
+      setStatus('正在生成图片...');
+      const imageUrl = await generateImage(prompt);
+      if (imageUrl) {
+        setImageUrl(imageUrl);
+        setStatus('图片已生成!');
+        setProgress(100);
+      } else {
+        setStatus('生成图片失败,请重试。');
+        setProgress(0);
+      }
     }
 
     setIsGenerating(false);
@@ -200,30 +250,34 @@ function App() {
             }} />
             <Box sx={{ position: 'relative', zIndex: 1 }}>
               <Typography variant="h3" component="h1" gutterBottom align="center" color="secondary" sx={{ textShadow: '0 0 10px rgba(0, 229, 255, 0.5)' }}>
-                文生视频
+                AI 内容生成器
               </Typography>
               <Divider sx={{ my: 3, bgcolor: 'secondary.main' }} />
+              <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered sx={{ mb: 3 }}>
+                <Tab icon={<MovieIcon />} label="生成视频" />
+                <Tab icon={<ImageIcon />} label="生成图片" />
+              </Tabs>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
                 <TextField
                   fullWidth
                   variant="outlined"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="输入创意视频提示词"
+                  placeholder={activeTab === 0 ? "输入视频提示词" : "输入图片提示词"}
                   sx={{ mb: 2, input: { color: 'text.primary' } }}
                 />
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={handleGenerateClick}
+                  onClick={handleGenerate}
                   disabled={isGenerating}
-                  startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <MovieIcon />}
+                  startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : (activeTab === 0 ? <MovieIcon /> : <ImageIcon />)}
                   sx={{
                     minWidth: 200,
                     animation: isGenerating ? `${pulseKeyframe} 2s infinite` : 'none',
                   }}
                 >
-                  {isGenerating ? '生成中...' : '生成视频'}
+                  {isGenerating ? '生成中...' : (activeTab === 0 ? '生成视频' : '生成图片')}
                 </Button>
               </Box>
               {status && (
@@ -234,7 +288,7 @@ function App() {
               {isGenerating && (
                 <LinearProgress variant="determinate" value={progress} sx={{ mt: 2 }} />
               )}
-              {(coverImageUrl || videoUrl) && (
+              {activeTab === 0 && (coverImageUrl || videoUrl) && (
                 <Card sx={{ mt: 4, borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
                   {coverImageUrl && (
                     <CardMedia
@@ -265,6 +319,16 @@ function App() {
                       </Box>
                     )}
                   </CardContent>
+                </Card>
+              )}
+              {activeTab === 1 && imageUrl && (
+                <Card sx={{ mt: 4, borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
+                  <CardMedia
+                    component="img"
+                    image={imageUrl}
+                    alt="Generated image"
+                    sx={{ height: 'auto', maxHeight: 500, objectFit: 'contain' }}
+                  />
                 </Card>
               )}
             </Box>

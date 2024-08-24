@@ -85,8 +85,6 @@ const theme = createTheme({
 
 const API_URL = 'https://empty-bush-798a.realzuanzuan.workers.dev';
 
-// const API_URL = 'https://open.bigmodel.cn/api/paas/v4';
-
 function App() {
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState('');
@@ -182,55 +180,61 @@ function App() {
     setStatus('正在生成...');
     setProgress(0);
 
-    if (activeTab === 0) {
-      // 生成视频
-    const videoId = await generateVideo(prompt);
-    const videoId = await generateVideo(prompt);
+    try {
+      if (activeTab === 0) {
+        // 生成视频
+        const videoId = await generateVideo(prompt);
+        if (videoId) {
+          let videoReady = false;
+          let attempts = 0;
+          const maxAttempts = 60; // 5分钟超时（假设每次检查间隔5秒）
+          while (!videoReady && attempts < maxAttempts) {
+            setStatus('正在检查视频状态...');
+            const statusResult = await checkVideoStatus(videoId);
 
-      const videoId = await generateVideo(prompt);
-
-      if (videoId) {
-        let videoReady = false;
-        while (!videoReady) {
-          setStatus('正在检查视频状态...');
-          const statusResult = await checkVideoStatus(videoId);
-
-          if (statusResult && statusResult.task_status === 'SUCCESS') {
-            videoReady = true;
-            const videoResult = statusResult.video_result[0];
-            setVideoUrl(videoResult.url);
-            setCoverImageUrl(videoResult.cover_image_url);
-            setStatus('视频已就绪!');
-            setProgress(100);
-          } else if (statusResult && statusResult.task_status === 'PROCESSING') {
-            setStatus('视频正在处理中,请稍候...');
-            setProgress((prev) => Math.min(prev + 10, 90));
-            await new Promise(resolve => setTimeout(resolve, 5000));
-          } else {
-            videoReady = true;
-            setStatus('生成视频失败,请重试。');
-            setProgress(0);
+            if (statusResult && statusResult.task_status === 'SUCCESS') {
+              videoReady = true;
+              const videoResult = statusResult.video_result[0];
+              setVideoUrl(videoResult.url);
+              setCoverImageUrl(videoResult.cover_image_url);
+              setStatus('视频已就绪!');
+              setProgress(100);
+            } else if (statusResult && statusResult.task_status === 'PROCESSING') {
+              setStatus('视频正在处理中,请稍候...');
+              setProgress((prev) => Math.min(prev + 10, 90));
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            } else {
+              videoReady = true;
+              throw new Error('生成视频失败');
+            }
+            attempts++;
           }
+          if (attempts >= maxAttempts) {
+            throw new Error('生成视频超时');
+          }
+        } else {
+          throw new Error('无法生成视频');
         }
       } else {
-        setStatus('无法生成视频,请重试。');
-        setProgress(0);
+        // 生成图片
+        setStatus('正在生成图片...');
+        setProgress(50); // 设置进度到50%
+        const imageUrl = await generateImage(prompt);
+        if (imageUrl) {
+          setImageUrl(imageUrl);
+          setStatus('图片已生成!');
+          setProgress(100);
+        } else {
+          throw new Error('生成图片失败');
+        }
       }
-    } else {
-      // 生成图片
-      setStatus('正在生成图片...');
-      const imageUrl = await generateImage(prompt);
-      if (imageUrl) {
-        setImageUrl(imageUrl);
-        setStatus('图片已生成!');
-        setProgress(100);
-      } else {
-        setStatus('生成图片失败,请重试。');
-        setProgress(0);
-      }
+    } catch (error) {
+      console.error('生成内容时出错:', error);
+      setStatus(`${error.message}，请重试。`);
+      setProgress(0);
+    } finally {
+      setIsGenerating(false);
     }
-
-    setIsGenerating(false);
   };
 
   return (

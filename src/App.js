@@ -17,6 +17,7 @@ import {
 import { createTheme, ThemeProvider, alpha } from '@mui/material/styles';
 import MovieIcon from '@mui/icons-material/Movie';
 import ImageIcon from '@mui/icons-material/Image';
+import DownloadIcon from '@mui/icons-material/Download';
 import { styled } from '@mui/material/styles';
 
 const theme = createTheme({
@@ -191,6 +192,22 @@ function App() {
     }
   };
 
+  const handleDownload = (url, filename) => {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      })
+      .catch(error => console.error('Download failed:', error));
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
@@ -248,29 +265,47 @@ function App() {
               <StyledCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                   {activeTab === 0 && videoUrl ? (
-                    <Box sx={{ width: '100%', position: 'relative', paddingTop: '56.25%' }}>
-                      <video
-                        controls
-                        width="100%"
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                        }}
+                    <>
+                      <Box sx={{ width: '100%', position: 'relative', paddingTop: '56.25%', mb: 2 }}>
+                        <video
+                          controls
+                          width="100%"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                          }}
+                        >
+                          <source src={videoUrl} type="video/mp4" />
+                          Your browser does not support HTML5 video.
+                        </video>
+                      </Box>
+                      <Button
+                        variant="contained"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => handleDownload(videoUrl, 'generated-video.mp4')}
                       >
-                        <source src={videoUrl} type="video/mp4" />
-                        Your browser does not support HTML5 video.
-                      </video>
-                    </Box>
+                        Download Video
+                      </Button>
+                    </>
                   ) : activeTab === 1 && imageUrl ? (
-                    <CardMedia
-                      component="img"
-                      image={imageUrl}
-                      alt="Generated image"
-                      sx={{ maxHeight: 400, objectFit: 'contain' }}
-                    />
+                    <>
+                      <CardMedia
+                        component="img"
+                        image={imageUrl}
+                        alt="Generated image"
+                        sx={{ maxHeight: 400, objectFit: 'contain', mb: 2 }}
+                      />
+                      <Button
+                        variant="contained"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => handleDownload(imageUrl, 'generated-image.png')}
+                      >
+                        Download Image
+                      </Button>
+                    </>
                   ) : (
                     <Typography variant="body1" color="text.secondary">
                       Generated content will appear here

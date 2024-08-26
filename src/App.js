@@ -11,6 +11,8 @@ import {
   CardContent,
   LinearProgress,
   Grid,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { createTheme, ThemeProvider, alpha } from '@mui/material/styles';
 import MovieIcon from '@mui/icons-material/Movie';
@@ -87,6 +89,14 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    setStatus('');
+    setProgress(0);
+    setVideoUrl('');
+    setImageUrl('');
+  };
 
   const getApiKey = async () => {
     return process.env.REACT_APP_API_KEY;
@@ -188,6 +198,10 @@ function App() {
           <Typography variant="h1" component="h1" gutterBottom align="center" color="primary" sx={{ mb: 4 }}>
             Next-Generation AI Creative Studio
           </Typography>
+          <Tabs value={activeTab} onChange={handleTabChange} centered sx={{ mb: 3 }}>
+            <Tab label="AI Videos" icon={<MovieIcon />} iconPosition="start" />
+            <Tab label="AI Images" icon={<ImageIcon />} iconPosition="start" />
+          </Tabs>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <StyledCard>

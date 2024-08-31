@@ -13,12 +13,15 @@ import {
   Grid,
   Tabs,
   Tab,
+  Paper
 } from '@mui/material';
 import { createTheme, ThemeProvider, alpha } from '@mui/material/styles';
 import MovieIcon from '@mui/icons-material/Movie';
 import ImageIcon from '@mui/icons-material/Image';
+import VideocamIcon from '@mui/icons-material/Videocam';
 import DownloadIcon from '@mui/icons-material/Download';
 import { styled } from '@mui/material/styles';
+import VideoCall from './Video';  // 导入 VideoCall 组件
 
 const theme = createTheme({
   palette: {
@@ -211,103 +214,167 @@ function App() {
           <Tabs value={activeTab} onChange={handleTabChange} centered sx={{ mb: 3 }}>
             <Tab label="AI Videos" icon={<MovieIcon />} iconPosition="start" />
             <Tab label="AI Images" icon={<ImageIcon />} iconPosition="start" />
+            <Tab label="Video Call" icon={<VideocamIcon />} iconPosition="start" />
           </Tabs>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <StyledCard>
-                <CardContent>
-                  <Typography variant="h5" component="h2" gutterBottom>
-                    {activeTab === 0 ? 'AI Videos' : 'AI Images'}
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder={activeTab === 0 ? "Enter video prompt" : "Enter image prompt"}
-                    sx={{ mb: 2 }}
-                  />
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={generateContent}
-                    disabled={isGenerating}
-                    startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : (activeTab === 0 ? <MovieIcon /> : <ImageIcon />)}
-                    sx={{
-                      py: 1.5,
-                      backgroundColor: 'primary.main',
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.8),
-                      },
-                    }}
-                  >
-                    {isGenerating ? 'Generating...' : (activeTab === 0 ? 'Generate Video' : 'Generate Image')}
-                  </Button>
-                  {status && (
-                    <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
-                      {status}
+          {activeTab === 0 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <StyledCard>
+                  <CardContent>
+                    <Typography variant="h5" component="h2" gutterBottom>
+                      AI Videos
                     </Typography>
-                  )}
-                  {isGenerating && (
-                    <LinearProgress variant="determinate" value={progress} sx={{ mt: 2 }} />
-                  )}
-                </CardContent>
-              </StyledCard>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <StyledCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                  {activeTab === 0 && videoUrl ? (
-                    <>
-                      <Box sx={{ width: '100%', position: 'relative', paddingTop: '56.25%', mb: 2 }}>
-                        <video
-                          controls
-                          width="100%"
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                          }}
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Enter video prompt"
+                      sx={{ mb: 2 }}
+                    />
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={generateContent}
+                      disabled={isGenerating}
+                      startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <MovieIcon />}
+                      sx={{
+                        py: 1.5,
+                        backgroundColor: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.8),
+                        },
+                      }}
+                    >
+                      {isGenerating ? 'Generating...' : 'Generate Video'}
+                    </Button>
+                    {status && (
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+                        {status}
+                      </Typography>
+                    )}
+                    {isGenerating && (
+                      <LinearProgress variant="determinate" value={progress} sx={{ mt: 2 }} />
+                    )}
+                  </CardContent>
+                </StyledCard>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <StyledCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    {videoUrl ? (
+                      <>
+                        <Box sx={{ width: '100%', position: 'relative', paddingTop: '56.25%', mb: 2 }}>
+                          <video
+                            controls
+                            width="100%"
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                            }}
+                          >
+                            <source src={videoUrl} type="video/mp4" />
+                            Your browser does not support HTML5 video.
+                          </video>
+                        </Box>
+                        <Button
+                          variant="contained"
+                          startIcon={<DownloadIcon />}
+                          onClick={() => handleDownload(videoUrl, 'generated-video.mp4')}
                         >
-                          <source src={videoUrl} type="video/mp4" />
-                          Your browser does not support HTML5 video.
-                        </video>
-                      </Box>
-                      <Button
-                        variant="contained"
-                        startIcon={<DownloadIcon />}
-                        onClick={() => handleDownload(videoUrl, 'generated-video.mp4')}
-                      >
-                        Download Video
-                      </Button>
-                    </>
-                  ) : activeTab === 1 && imageUrl ? (
-                    <>
-                      <CardMedia
-                        component="img"
-                        image={imageUrl}
-                        alt="Generated image"
-                        sx={{ maxHeight: 400, objectFit: 'contain', mb: 2 }}
-                      />
-                      <Button
-                        variant="contained"
-                        startIcon={<DownloadIcon />}
-                        onClick={() => handleDownload(imageUrl, 'generated-image.png')}
-                      >
-                        Download Image
-                      </Button>
-                    </>
-                  ) : (
-                    <Typography variant="body1" color="text.secondary">
-                      Generated content will appear here
-                    </Typography>
-                  )}
-                </CardContent>
-              </StyledCard>
+                          Download Video
+                        </Button>
+                      </>
+                    ) : (
+                      <Typography variant="body1" color="text.secondary">
+                        Generated content will appear here
+                      </Typography>
+                    )}
+                  </CardContent>
+                </StyledCard>
+              </Grid>
             </Grid>
-          </Grid>
+          )}
+          {activeTab === 1 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <StyledCard>
+                  <CardContent>
+                    <Typography variant="h5" component="h2" gutterBottom>
+                      AI Images
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Enter image prompt"
+                      sx={{ mb: 2 }}
+                    />
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={generateContent}
+                      disabled={isGenerating}
+                      startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <ImageIcon />}
+                      sx={{
+                        py: 1.5,
+                        backgroundColor: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.8),
+                        },
+                      }}
+                    >
+                      {isGenerating ? 'Generating...' : 'Generate Image'}
+                    </Button>
+                    {status && (
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+                        {status}
+                      </Typography>
+                    )}
+                    {isGenerating && (
+                      <LinearProgress variant="determinate" value={progress} sx={{ mt: 2 }} />
+                    )}
+                  </CardContent>
+                </StyledCard>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <StyledCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    {imageUrl ? (
+                      <>
+                        <CardMedia
+                          component="img"
+                          image={imageUrl}
+                          alt="Generated image"
+                          sx={{ maxHeight: 400, objectFit: 'contain', mb: 2 }}
+                        />
+                        <Button
+                          variant="contained"
+                          startIcon={<DownloadIcon />}
+                          onClick={() => handleDownload(imageUrl, 'generated-image.png')}
+                        >
+                          Download Image
+                        </Button>
+                      </>
+                    ) : (
+                      <Typography variant="body1" color="text.secondary">
+                        Generated content will appear here
+                      </Typography>
+                    )}
+                  </CardContent>
+                </StyledCard>
+              </Grid>
+            </Grid>
+          )}
+          {activeTab === 2 && (
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <VideoCall />
+            </Paper>
+          )}
         </Container>
       </Box>
     </ThemeProvider>

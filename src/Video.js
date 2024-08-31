@@ -76,7 +76,11 @@ const VideoCall = () => {
 
       remotePC.ontrack = (event) => {
         if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
+          if (remoteVideoRef.current.srcObject) {
+            remoteVideoRef.current.srcObject.addTrack(event.track);
+          } else {
+            remoteVideoRef.current.srcObject = new MediaStream([event.track]);
+          }
         }
       };
 

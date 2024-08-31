@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Grid, Typography } from '@mui/material';
 
 // 这些常量应该从环境变量中获取，而不是硬编码

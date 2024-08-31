@@ -9,8 +9,6 @@ const API_BASE = `https://rtc.live.cloudflare.com/v1/apps/${APP_ID}`;
 const VideoCall = () => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const [localPeerConnection, setLocalPeerConnection] = useState(null);
-  const [remotePeerConnection, setRemotePeerConnection] = useState(null);
 
   useEffect(() => {
     const initializeCall = async () => {
@@ -19,7 +17,6 @@ const VideoCall = () => {
 
       const localSessionId = await createCallsSession();
       const localPC = await createPeerConnection();
-      setLocalPeerConnection(localPC);
 
       const transceivers = media.getTracks().map(track =>
         localPC.addTransceiver(track, { direction: 'sendonly' })
@@ -49,7 +46,6 @@ const VideoCall = () => {
       // Echo functionality
       const remoteSessionId = await createCallsSession();
       const remotePC = await createPeerConnection();
-      setRemotePeerConnection(remotePC);
 
       const tracksToPull = transceivers.map(({ sender }) => ({
         location: 'remote',
@@ -83,20 +79,17 @@ const VideoCall = () => {
           remoteVideoRef.current.srcObject = event.streams[0];
         }
       };
+
+      // Make sure to close the peer connections in the cleanup function
+      return () => {
+        localPC.close();
+        remotePC.close();
+        localVideoRef.current?.srcObject?.getTracks().forEach(track => track.stop());
+        remoteVideoRef.current?.srcObject?.getTracks().forEach(track => track.stop());
+      };
     };
 
     initializeCall();
-
-    return () => {
-      setLocalPeerConnection(prev => {
-        if (prev) prev.close();
-        return null;
-      });
-      setRemotePeerConnection(prev => {
-        if (prev) prev.close();
-        return null;
-      });
-    };
   }, []); // Empty dependency array
 
   return (

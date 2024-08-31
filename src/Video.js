@@ -88,15 +88,16 @@ const VideoCall = () => {
     initializeCall();
 
     return () => {
-      // Cleanup function
-      if (localPeerConnection) {
-        localPeerConnection.close();
-      }
-      if (remotePeerConnection) {
-        remotePeerConnection.close();
-      }
+      setLocalPeerConnection(prev => {
+        if (prev) prev.close();
+        return null;
+      });
+      setRemotePeerConnection(prev => {
+        if (prev) prev.close();
+        return null;
+      });
     };
-  }, []);
+  }, []); // Empty dependency array
 
   return (
     <Grid container spacing={2}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   TextField,
@@ -13,7 +13,11 @@ import {
   Grid,
   Tabs,
   Tab,
-  Paper
+  Paper,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup
 } from '@mui/material';
 import { createTheme, ThemeProvider, alpha } from '@mui/material/styles';
 import MovieIcon from '@mui/icons-material/Movie';
@@ -22,6 +26,7 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import DownloadIcon from '@mui/icons-material/Download';
 import { styled } from '@mui/material/styles';
 import VideoCall from './Video';  // 导入 VideoCall 组件
+import useSpeechRecognition from './SpeechRecognition';  // 导入 useSpeechRecognition 钩子
 
 const theme = createTheme({
   palette: {
@@ -93,6 +98,9 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
+  const [inputMethod, setInputMethod] = useState('text'); // 新增状态来选择输入方式
+
+  const transcript = useSpeechRecognition(); // 使用语音识别钩子
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -102,12 +110,18 @@ function App() {
     setImageUrl('');
   };
 
+  const handleInputMethodChange = (event) => {
+    setInputMethod(event.target.value);
+    setPrompt(''); // 清空 prompt
+  };
+
   const getApiKey = async () => {
     return process.env.REACT_APP_API_KEY;
   };
 
   const generateContent = async () => {
-    if (!prompt.trim()) {
+    const finalPrompt = inputMethod === 'text' ? prompt : transcript;
+    if (!finalPrompt.trim()) {
       alert('Please enter a prompt');
       return;
     }
@@ -127,7 +141,7 @@ function App() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({ prompt, model })
+        body: JSON.stringify({ prompt: finalPrompt, model })
       });
 
       if (!response.ok) {
@@ -204,6 +218,16 @@ function App() {
     document.body.removeChild(link);
   };
 
+  useEffect(() => {
+    console.log('App.js - API Key:', process.env.REACT_APP_API_KEY);
+    console.log('App.js - API Secret:', process.env.REACT_APP_API_SECRET);
+    console.log('App.js - App ID:', process.env.REACT_APP_APP_ID);
+
+    if (!process.env.REACT_APP_API_KEY || !process.env.REACT_APP_API_SECRET || !process.env.REACT_APP_APP_ID) {
+      console.error('API credentials are missing. Please check your .env file.');
+    }
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
@@ -224,14 +248,26 @@ function App() {
                     <Typography variant="h5" component="h2" gutterBottom>
                       AI Videos
                     </Typography>
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Enter video prompt"
-                      sx={{ mb: 2 }}
-                    />
+                    <FormControl component="fieldset" sx={{ mt: 3 }}>
+                      <RadioGroup row value={inputMethod} onChange={handleInputMethodChange}>
+                        <FormControlLabel value="text" control={<Radio />} label="Text Input" />
+                        <FormControlLabel value="voice" control={<Radio />} label="Voice Input" />
+                      </RadioGroup>
+                    </FormControl>
+                    {inputMethod === 'text' ? (
+                      <TextField
+                        fullWidth
+                        variant="outlined"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Enter video prompt"
+                        sx={{ mb: 2 }}
+                      />
+                    ) : (
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                        {transcript || 'Listening...'}
+                      </Typography>
+                    )}
                     <Button
                       variant="contained"
                       fullWidth
@@ -306,14 +342,26 @@ function App() {
                     <Typography variant="h5" component="h2" gutterBottom>
                       AI Images
                     </Typography>
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Enter image prompt"
-                      sx={{ mb: 2 }}
-                    />
+                    <FormControl component="fieldset" sx={{ mt: 3 }}>
+                      <RadioGroup row value={inputMethod} onChange={handleInputMethodChange}>
+                        <FormControlLabel value="text" control={<Radio />} label="Text Input" />
+                        <FormControlLabel value="voice" control={<Radio />} label="Voice Input" />
+                      </RadioGroup>
+                    </FormControl>
+                    {inputMethod === 'text' ? (
+                      <TextField
+                        fullWidth
+                        variant="outlined"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Enter image prompt"
+                        sx={{ mb: 2 }}
+                      />
+                    ) : (
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                        {transcript || 'Listening...'}
+                      </Typography>
+                    )}
                     <Button
                       variant="contained"
                       fullWidth

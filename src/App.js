@@ -218,16 +218,6 @@ function App() {
     document.body.removeChild(link);
   };
 
-  useEffect(() => {
-    console.log('App.js - API Key:', process.env.apiKey);
-    console.log('App.js - API Secret:', process.env.apiSecret);
-    console.log('App.js - App ID:', process.env.appId);
-
-    if (!process.env.apiKey || !process.env.apiSecret || !process.env.appId) {
-      console.error('API credentials are missing. Please check your .env file.');
-    }
-  }, []);
-
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>

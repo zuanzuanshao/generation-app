@@ -219,11 +219,7 @@ function App() {
   };
 
   useEffect(() => {
-    console.log('App.js - API Key:', process.env.REACT_APP_API_KEY);
-    console.log('App.js - API Secret:', process.env.REACT_APP_API_SECRET);
-    console.log('App.js - App ID:', process.env.REACT_APP_APP_ID);
-
-    if (!process.env.REACT_APP_API_KEY || !process.env.REACT_APP_API_SECRET || !process.env.REACT_APP_APP_ID) {
+    if (!process.env.apiKey || !process.env.apiSecret || !process.env.appId) {
       console.error('API credentials are missing. Please check your .env file.');
     }
   }, []);

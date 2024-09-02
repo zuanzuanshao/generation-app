@@ -7,7 +7,6 @@ import {
   Box,
   CircularProgress,
   Card,
-  CardMedia,
   CardContent,
   LinearProgress,
   Grid,
@@ -25,8 +24,8 @@ import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import DownloadIcon from '@mui/icons-material/Download';
 import { styled } from '@mui/material/styles';
-import VideoCall from './Video';  // 导入 VideoCall 组件
-import useSpeechRecognition from './SpeechRecognition';  // 导入 useSpeechRecognition 钩子
+import VideoCall from './Video';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 const theme = createTheme({
   palette: {
@@ -98,9 +97,15 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
-  const [inputMethod, setInputMethod] = useState('text'); // 新增状态来选择输入方式
+  const [inputMethod, setInputMethod] = useState('text');
 
-  const transcript = useSpeechRecognition(); // 使用语音识别钩子
+  const {
+    transcript,
+    listening,
+    resetTranscript
+  } = useSpeechRecognition();
+
+  const startListening = () => SpeechRecognition.startListening({ continuous: true, language: 'zh-CN' });
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -112,7 +117,7 @@ function App() {
 
   const handleInputMethodChange = (event) => {
     setInputMethod(event.target.value);
-    setPrompt(''); // 清空 prompt
+    setPrompt('');
   };
 
   const getZhiPuApiKey = async () => {
@@ -151,11 +156,9 @@ function App() {
       const data = await response.json();
 
       if (activeTab === 0) {
-        // Handle video generation
         const videoId = data.id;
         await checkVideoStatus(videoId);
       } else {
-        // Handle image generation
         if (data.data && data.data.length > 0 && data.data[0].url) {
           setImageUrl(data.data[0].url);
           setStatus('Image generated!');
@@ -254,9 +257,23 @@ function App() {
                         sx={{ mb: 2 }}
                       />
                     ) : (
-                      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                        {transcript || 'Listening...'}
-                      </Typography>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          Microphone: {listening ? 'on' : 'off'}
+                        </Typography>
+                        <Button onClick={startListening} disabled={listening}>
+                          Start
+                        </Button>
+                        <Button onClick={SpeechRecognition.stopListening} disabled={!listening}>
+                          Stop
+                        </Button>
+                        <Button onClick={resetTranscript}>
+                          Reset
+                        </Button>
+                        <Typography variant="body1" color="text.secondary">
+                          {transcript || 'Speak now...'}
+                        </Typography>
+                      </Box>
                     )}
                     <Button
                       variant="contained"
@@ -348,9 +365,23 @@ function App() {
                         sx={{ mb: 2 }}
                       />
                     ) : (
-                      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                        {transcript || 'Listening...'}
-                      </Typography>
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          Microphone: {listening ? 'on' : 'off'}
+                        </Typography>
+                        <Button onClick={startListening} disabled={listening}>
+                          Start
+                        </Button>
+                        <Button onClick={SpeechRecognition.stopListening} disabled={!listening}>
+                          Stop
+                        </Button>
+                        <Button onClick={resetTranscript}>
+                          Reset
+                        </Button>
+                        <Typography variant="body1" color="text.secondary">
+                          {transcript || 'Speak now...'}
+                        </Typography>
+                      </Box>
                     )}
                     <Button
                       variant="contained"
@@ -382,14 +413,11 @@ function App() {
               <Grid item xs={12} md={6}>
                 <StyledCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                    {imageUrl ? (
+				  {imageUrl ? (
                       <>
-                        <CardMedia
-                          component="img"
-                          image={imageUrl}
-                          alt="Generated image"
-                          sx={{ maxHeight: 400, objectFit: 'contain', mb: 2 }}
-                        />
+                        <Box sx={{ width: '100%', mb: 2 }}>
+                          <img src={imageUrl} alt="Generated" style={{ width: '100%', height: 'auto' }} />
+                        </Box>
                         <Button
                           variant="contained"
                           startIcon={<DownloadIcon />}

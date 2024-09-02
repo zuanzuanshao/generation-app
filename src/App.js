@@ -115,8 +115,8 @@ function App() {
     setPrompt(''); // 清空 prompt
   };
 
-  const getApiKey = async () => {
-    return process.env.REACT_APP_API_KEY;
+  const getZhiPuApiKey = async () => {
+    return process.env.REACT_APP_ZHIPUAI_API_KEY;
   };
 
   const generateContent = async () => {
@@ -131,7 +131,7 @@ function App() {
     setProgress(0);
 
     try {
-      const apiKey = await getApiKey();
+      const ZhiPuApiKey = await getZhiPuApiKey();
       const endpoint = activeTab === 0 ? 'videos/generations' : 'images/generations';
       const model = activeTab === 0 ? 'cogvideox' : 'cogview-3';
 
@@ -139,7 +139,7 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${ZhiPuApiKey}`
         },
         body: JSON.stringify({ prompt: finalPrompt, model })
       });
@@ -184,7 +184,7 @@ function App() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await getApiKey()}`
+          'Authorization': `Bearer ${await getZhiPuApiKey()}`
         }
       }).then(res => res.json());
 

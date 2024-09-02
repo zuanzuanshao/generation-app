@@ -6,6 +6,8 @@ import Base64 from 'crypto-js/enc-base64';
 const useSpeechRecognition = () => {
   const [transcript, setTranscript] = useState('');
   const wsRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
   useEffect(() => {
     const getApiCredentials = async () => {
@@ -49,7 +51,7 @@ const useSpeechRecognition = () => {
 
       const ws = new WebSocket(authUrl);
 
-      ws.onopen = () => {
+      ws.onopen = async () => {
         console.log('WebSocket connection opened');
         const params = {
           common: { app_id: appId },
@@ -66,6 +68,22 @@ const useSpeechRecognition = () => {
           },
         };
         ws.send(JSON.stringify(params));
+
+        // 获取音频流
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = mediaStream;
+
+        // 创建 MediaRecorder
+        const mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
+        mediaRecorderRef.current = mediaRecorder;
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+            ws.send(event.data);
+          }
+        };
+
+        mediaRecorder.start(100); // 每100ms发送一次音频数据
       };
 
       ws.onmessage = (event) => {
@@ -82,6 +100,12 @@ const useSpeechRecognition = () => {
 
       ws.onclose = () => {
         console.log('WebSocket connection closed');
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.stop();
+        }
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        }
       };
 
       wsRef.current = ws;
@@ -92,6 +116,12 @@ const useSpeechRecognition = () => {
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
+      }
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);

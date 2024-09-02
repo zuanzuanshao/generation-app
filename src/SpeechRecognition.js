@@ -24,15 +24,13 @@ const useSpeechRecognition = () => {
 
     const getAuthUrl = async (apiKey, apiSecret) => {
       try {
-        const url = 'wss://iat-api.xfyun.cn/v2/iat';
-        const host = 'iat-api.xfyun.cn';
-        const date = new Date().toGMTString();
-        const algorithm = 'hmac-sha256';
-        const headers = 'host date request-line';
+        const url = 'wss://ws-api.xfyun.cn/v2/iat';
+        const host = 'ws-api.xfyun.cn';
+        const date = new Date().toUTCString();
         const signatureOrigin = `host: ${host}\ndate: ${date}\nGET /v2/iat HTTP/1.1`;
         const signatureSha = HmacSHA256(signatureOrigin, apiSecret);
         const signature = Base64.stringify(signatureSha);
-        const authorizationOrigin = `api_key="${apiKey}", algorithm="${algorithm}", headers="${headers}", signature="${signature}"`;
+        const authorizationOrigin = `api_key="${apiKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`;
         const authorization = Base64.stringify(CryptoJS.enc.Utf8.parse(authorizationOrigin));
         return `${url}?authorization=${authorization}&date=${date}&host=${host}`;
       } catch (error) {
@@ -79,7 +77,20 @@ const useSpeechRecognition = () => {
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-            ws.send(event.data);
+            const reader = new FileReader();
+            reader.onload = () => {
+              const base64data = reader.result.split(',')[1];
+              const audioData = {
+                data: {
+                  status: 1,
+                  format: 'audio/L16;rate=16000',
+                  audio: base64data,
+                  encoding: 'raw',
+                },
+              };
+              ws.send(JSON.stringify(audioData));
+            };
+            reader.readAsDataURL(event.data);
           }
         };
 

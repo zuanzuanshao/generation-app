@@ -58,6 +58,7 @@ const useSpeechRecognition = () => {
             domain: 'iat',
             accent: 'mandarin',
             vad_eos: 5000,
+			dwa: 'wpgs'
           },
           data: {
             status: 0,
@@ -97,12 +98,28 @@ const useSpeechRecognition = () => {
         mediaRecorder.start(100); // 每100ms发送一次音频数据
       };
 
-      ws.onmessage = (event) => {
-        const result = JSON.parse(event.data);
-        if (result.data && result.data.result) {
-          const text = result.data.result.ws.map(w => w.cw[0].w).join('');
-          setTranscript(prevTranscript => prevTranscript + text);
-        }
+      ws.onmessage = (event) => {let result = JSON.parse(event.data);
+  
+		if (result.data && result.data.result) {
+		  let str = '';
+		  let ws = result.data.result.ws;
+		  
+		  for (let i = 0; i < ws.length; i++) {
+			str += ws[i].cw[0].w;
+		  }
+		  
+		  // 处理动态修正结果
+		  if (result.data.result.pgs === 'rpl') {
+			// 动态修正，替换前面的结果
+			setTranscript(prevTranscript => {
+			  const lastIndex = prevTranscript.lastIndexOf(str);
+			  return prevTranscript.substring(0, lastIndex) + str;
+			});
+		  } else {
+			// 普通识别结果，直接添加
+			setTranscript(prevTranscript => prevTranscript + str);
+		  }
+		}
       };
 
       ws.onerror = (error) => {

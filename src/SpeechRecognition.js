@@ -7,13 +7,9 @@ const useSpeechRecognition = () => {
   const wsRef = useRef(null);
 
   useEffect(() => {
-    const apiKey = process.env.REACT_APP_API_KEY;
-    const apiSecret = process.env.REACT_APP_API_SECRET;
-    const appId = process.env.REACT_APP_APP_ID;
-
-    console.log('API Key:', apiKey);
-    console.log('API Secret:', apiSecret);
-    console.log('App ID:', appId);
+    const apiKey = process.env.apiKey;
+    const apiSecret = process.env.apiSecret;
+    const appId = process.env.appId;
 
     if (!apiKey || !apiSecret || !appId) {
       console.error('API credentials are missing. Please check your .env file.');
